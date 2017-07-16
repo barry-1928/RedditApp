@@ -1,5 +1,6 @@
 package com.example.dell.reddit;
 
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.ProgressBar;
 
 import java.util.ArrayList;
 
@@ -31,24 +33,47 @@ public class MainActivity extends AppCompatActivity {
     int i;
     public static ArrayList<PostDetails> postDetailsArrayList;
     public static boolean loading;
+    ProgressDialog progressDialog;
     int pastVisiblesItems, visibleItemCount, totalItemCount;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-//        MyHelper helper = new MyHelper(this);
-//        loading = true;
-//        SQLiteDatabase database = helper.getWritableDatabase();
-//        database.delete(TABLE_NAME,null,null);
+        MyHelper helper = new MyHelper(this);
+        loading = true;
+        SQLiteDatabase database = helper.getWritableDatabase();
+        database.delete(TABLE_NAME,null,null);
+        i = 0;
         postDetailsArrayList = new ArrayList<>();
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("Fetching data");
+        progressDialog.setMessage("Please wait while we load your data");
+        progressDialog.setIndeterminate(true);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        MyAsyncTask myAsyncTask = new MyAsyncTask();
+        final MyAsyncTask myAsyncTask = new MyAsyncTask();
         myAsyncTask.execute(0);
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                if (!recyclerView.canScrollVertically(-1)) {
+
+                } else if (!recyclerView.canScrollVertically(1)) {
+                    i=1;
+                    myAsyncTask.cancel(true);
+                    MyAsyncTask asyncTask = new MyAsyncTask();
+                    asyncTask.execute(1);
+                } else if (dy < 0) {
+                    //onScrolledUp();
+                } else if (dy > 0) {
+                    //onScrolledDown();
+                }
+                super.onScrolled(recyclerView, dx, dy);
+            }
+        });
 
 
 
@@ -94,6 +119,12 @@ public class MainActivity extends AppCompatActivity {
     class MyAsyncTask extends AsyncTask<Integer, Void, Void> {
 
         @Override
+        protected void onPreExecute() {
+            progressDialog.show();
+            progressDialog.setCanceledOnTouchOutside(false);
+        }
+
+        @Override
         protected Void doInBackground(Integer... params) {
             Utils.EstablishUrlConnection(params[0]);
             return null;
@@ -102,8 +133,18 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
 
-            adapter = new MyAdapter(MainActivity.this, null, recyclerView);
-            recyclerView.setAdapter(adapter);
+
+
+            if(i==0) {
+
+                adapter = new MyAdapter(MainActivity.this, null, recyclerView);
+                recyclerView.setAdapter(adapter);
+                progressDialog.dismiss();
+            }
+            else {
+                adapter.Refresh();
+                progressDialog.dismiss();
+            }
             MyHelper helper = new MyHelper(MainActivity.this);
             SQLiteDatabase database = helper.getWritableDatabase();
             int n = Utils.postDetailsArrayList.size();
@@ -118,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 contentValues.put(COMMENTS,temp.number_of_comments);
                 database.insert(TABLE_NAME,null,contentValues);
             }
+            Log.d("xyz","TotalSize is "+MainActivity.postDetailsArrayList.size());
             database.close();
         }
     }

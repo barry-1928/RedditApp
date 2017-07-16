@@ -71,17 +71,7 @@ class MyAdapter extends android.support.v7.widget.RecyclerView.Adapter<MyAdapter
         holder.created_utc_timestamp_textview.setText(""+ postDetailsArrayListRecyclerView.get(position).created_utc_timestamp);
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
         //Log.d("xyz",details.get(details_size-1-position).url+" "+details.get(details_size-1-position).name);
-        if(position == MainActivity.postDetailsArrayList.size()-1) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    // DO your work here
-                    // get the data
-                    Utils.EstablishUrlConnection(1);
-                }
-            }).start();
         }
-    }
 
     @Override
     public int getItemCount() {

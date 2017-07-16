@@ -66,6 +66,7 @@ public class Utils {
             MainActivity.postDetailsArrayList.addAll(postDetailsArrayList);
 
             after = root_data.getString("after");
+            Log.d("xyz",after);
 
         } catch (JSONException e) {
             Log.e("xyz", e.getMessage());
@@ -76,10 +77,14 @@ public class Utils {
     public static void EstablishUrlConnection(int n) {
             String jsonCode = "";
             String url_name;
-            if(n == 0)
+            if(n == 0) {
                 url_name = api;
-            else
-                url_name = api+"?"+after;
+                Log.d("xyz", url_name);
+            }
+            else {
+                url_name = api + "?" + after;
+                Log.d("xyz",url_name);
+            }
 
             try {
 
